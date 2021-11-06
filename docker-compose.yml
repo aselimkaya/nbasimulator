@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: 'mongo:latest'
+    container_name: 'mongo'
+    ports:
+      - '27017:27017'
+
+  go:
+    container_name: "nbasimulator"
+    build:
+      context: .
+    ports:
+      - "1323:1323"
+    environment:
+      - SERVER_PORT=1323
+      - SERVER_HOST=localhost
+      - MONGO_PORT=27017
+      - MONGO_HOST=mongodb
