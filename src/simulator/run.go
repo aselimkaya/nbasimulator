@@ -32,17 +32,6 @@ func New() *Simulator {
 	}
 }
 
-func NewTest() *Simulator {
-	conn, err := repository.NewConnectionTest(context.Background(), "nbasimulator")
-	if err != nil {
-		fmt.Println(err)
-	}
-	return &Simulator{
-		TeamService:   *service.NewTeamService(conn, "team"),
-		PlayerService: *service.NewPlayerService(conn, "player"),
-	}
-}
-
 func (s *Simulator) Run() {
 	schedule, err := s.setWeeklySchedule()
 	if err != nil {
