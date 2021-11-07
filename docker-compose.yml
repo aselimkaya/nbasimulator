@@ -20,5 +20,7 @@ services:
       - MONGO_PORT=27017
       - MONGO_SCHEMA=mongodb
       - MONGO_DATABASE_NAME=nbasimulator
+      - GAME_COLLECTION=game
       - TEAM_COLLECTION=team
       - PLAYER_COLLECTION=player
+      - PLAYER_GAME_INFO_COLLECTION=player_game_info
