@@ -7,7 +7,6 @@ type Game struct {
 }
 
 type ScheduledGame struct {
-	Game          Game          `json:"game,omitempty" bson:"game,omitempty"`
-	Duration      int           `json:"duration,omitempty" bson:"duration,omitempty"`
-	AttackingTeam *TeamGameInfo `json:"attacking_team,omitempty" bson:"attacking_team,omitempty"`
+	Game     Game `json:"game,omitempty" bson:"game,omitempty"`
+	Duration int  `json:"duration,omitempty" bson:"duration,omitempty"`
 }
