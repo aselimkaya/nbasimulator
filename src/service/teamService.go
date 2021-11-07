@@ -1,10 +1,12 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aselimkaya/nbasimulator/src/collection"
 	"github.com/aselimkaya/nbasimulator/src/repository"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -17,12 +19,39 @@ func NewTeamService(conn *repository.Connection, collName string) *TeamService {
 	return &TeamService{Conn: conn, CollName: collName}
 }
 
+func (s *TeamService) GetAllTeams() ([]collection.Team, error) {
+	teams := make([]collection.Team, 0)
+	cursor, err := s.Conn.DB.Collection(s.CollName).Find(s.Conn.Ctx, bson.D{})
+
+	if err != nil {
+		return []collection.Team{}, fmt.Errorf("all teams could not be retrieved, error: %s", err.Error())
+	}
+
+	for cursor.Next(context.TODO()) {
+		t := collection.Team{}
+		err := cursor.Decode(&t)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		teams = append(teams, t)
+	}
+
+	if err := cursor.Err(); err != nil {
+		fmt.Println(err)
+	}
+
+	cursor.Close(s.Conn.Ctx)
+
+	return teams, nil
+}
+
 func (s *TeamService) FindByAbbreviation(abbr string) (collection.Team, error) {
 	team := collection.Team{}
 	err := s.Conn.DB.Collection(s.CollName).FindOne(s.Conn.Ctx, collection.Team{Abbreviation: abbr}).Decode(&team)
 
 	if err != nil {
-		return collection.Team{}, fmt.Errorf("player could not be found, given: %s, error: %s", abbr, err.Error())
+		return collection.Team{}, fmt.Errorf("team could not be found, given: %s, error: %s", abbr, err.Error())
 	}
 
 	return team, nil
