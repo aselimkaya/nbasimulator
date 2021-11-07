@@ -1,89 +1,100 @@
 package simulator
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/aselimkaya/nbasimulator/src/collection"
+	"github.com/go-resty/resty/v2"
 )
 
-func (s *Simulator) initDB() {
-	p1 := collection.Player{
-		Name: "Marcus Smart",
-		Team: "BOS",
-	}
+type PlayerResp struct {
+	Data []struct {
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Team      struct {
+			Abbreviation string `json:"abbreviation"`
+			FullName     string `json:"full_name"`
+		} `json:"team"`
+	} `json:"data"`
 
-	p2 := collection.Player{
-		Name: "Jaylen Brown",
-		Team: "BOS",
-	}
+	Meta struct {
+		CurrentPage int `json:"current_page"`
+		TotalPages  int `json:"total_pages"`
+	} `json:"meta"`
+}
 
-	p3 := collection.Player{
-		Name: "Jason Tatum",
-		Team: "BOS",
-	}
+func (s *Simulator) InitFromAPI() {
+	client := resty.New()
+	page := 1
+	fetchMore := true
 
-	p4 := collection.Player{
-		Name: "Al Horford",
-		Team: "BOS",
-	}
+	playerMap := make(map[string][]collection.Player)
+	teamMap := make(map[string]string)
 
-	p5 := collection.Player{
-		Name: "Robert Williams III",
-		Team: "BOS",
-	}
+	for fetchMore {
+		resp, err := client.R().
+			SetQueryParams(map[string]string{
+				"page":     fmt.Sprint(page),
+				"per_page": "100",
+			}).
+			Get("https://www.balldontlie.io/api/v1/players")
 
-	p6 := collection.Player{
-		Name: "Luka Doncic",
-		Team: "DAL",
-	}
-
-	p7 := collection.Player{
-		Name: "Tim Hardaway Jr.",
-		Team: "DAL",
-	}
-
-	p8 := collection.Player{
-		Name: "Dorain Finney-Smith",
-		Team: "DAL",
-	}
-
-	p9 := collection.Player{
-		Name: "Kristaps Porzingis",
-		Team: "DAL",
-	}
-
-	p10 := collection.Player{
-		Name: "Dwight Powell",
-		Team: "DAL",
-	}
-
-	players := []collection.Player{p1, p2, p3, p4, p5, p6, p7, p8, p9, p10}
-
-	for _, p := range players {
-		_, err := s.PlayerService.Insert(p)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("player info could not be retrieved from api")
+			return
+		} else if resp.IsError() {
+			fmt.Println("player request failed!", resp.Error())
+			return
+		}
+
+		var r PlayerResp
+		json.Unmarshal(resp.Body(), &r)
+
+		for _, p := range r.Data {
+			player := collection.Player{
+				Name: fmt.Sprintf("%s %s", p.FirstName, p.LastName),
+				Team: p.Team.Abbreviation,
+			}
+
+			if val, ok := playerMap[p.Team.Abbreviation]; ok {
+				if len(val) <= 15 {
+					playerMap[p.Team.Abbreviation] = append(val, player)
+				}
+			} else {
+				playerMap[p.Team.Abbreviation] = []collection.Player{player}
+			}
+
+			if _, ok := teamMap[p.Team.Abbreviation]; !ok {
+				teamMap[p.Team.Abbreviation] = p.Team.FullName
+			}
+
+		}
+
+		if r.Meta.CurrentPage == r.Meta.TotalPages {
+			fetchMore = false
+		} else {
+			page++
 		}
 	}
 
-	t1 := collection.Team{
-		Abbreviation: "BOS",
-		Name:         "Boston Celtics",
-		Players:      players[:5],
-	}
+	for k, v := range teamMap {
+		team := collection.Team{
+			Abbreviation: k,
+			Name:         v,
+			Players:      playerMap[k],
+		}
 
-	t2 := collection.Team{
-		Abbreviation: "DAL",
-		Name:         "Dallas Mavericks",
-		Players:      players[5:],
-	}
-
-	teams := []collection.Team{t1, t2}
-
-	for _, t := range teams {
-		_, err := s.TeamService.Insert(t)
+		_, err := s.TeamService.Insert(team)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Team %s could not be inserted. Error: %s\n", team.Name, err.Error())
+		}
+
+		for _, p := range playerMap[k] {
+			_, err := s.PlayerService.Insert(p)
+			if err != nil {
+				fmt.Printf("Player %s could not be inserted. Error: %s\n", p.Name, err.Error())
+			}
 		}
 	}
 }
