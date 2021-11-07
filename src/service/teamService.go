@@ -19,7 +19,7 @@ func NewTeamService(conn *repository.Connection, collName string) *TeamService {
 
 func (s *TeamService) FindByAbbreviation(abbr string) (collection.Team, error) {
 	team := collection.Team{}
-	err := s.Conn.DB.Collection(s.CollName).FindOne(s.Conn.Ctx, collection.Team{ID: abbr}).Decode(&team)
+	err := s.Conn.DB.Collection(s.CollName).FindOne(s.Conn.Ctx, collection.Team{Abbreviation: abbr}).Decode(&team)
 
 	if err != nil {
 		return collection.Team{}, fmt.Errorf("player could not be found, given: %s, error: %s", abbr, err.Error())
