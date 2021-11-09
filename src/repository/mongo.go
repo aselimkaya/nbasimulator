@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -39,4 +40,19 @@ func (c *Connection) NewCollection(collName string) (*mongo.Collection, error) {
 
 func (c *Connection) GetCollection(collName string) *mongo.Collection {
 	return c.DB.Collection(collName)
+}
+
+func (c *Connection) CheckIfCollectionExists(collName string) (bool, error) {
+	collections, err := c.DB.ListCollectionNames(c.Ctx, bson.D{})
+	if err != nil {
+		return false, err
+	}
+
+	for _, c := range collections {
+		if strings.EqualFold(c, collName) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
