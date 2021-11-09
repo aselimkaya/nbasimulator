@@ -12,11 +12,17 @@ import (
 	"github.com/aselimkaya/nbasimulator/src/service"
 )
 
+var Schedule []collection.ScheduledGame
+
 type Simulator struct {
 	GameService           service.GameService
 	TeamService           service.TeamService
 	PlayerService         service.PlayerService
 	PlayerGameInfoService service.PlayerGameInfoService
+}
+
+func init() {
+	Schedule = make([]collection.ScheduledGame, 0)
 }
 
 func New() *Simulator {
@@ -39,19 +45,21 @@ func (s *Simulator) Run() {
 		return
 	}
 
+	Schedule = schedule
+
 	var wg sync.WaitGroup
 	wg.Add(len(schedule))
 
 	for i := 0; i < len(schedule); i++ {
 		go func(i int) {
 			defer wg.Done()
-			s.runSingleGame(schedule[i])
+			s.runSingleGame(&schedule[i])
 		}(i)
 	}
 	wg.Wait()
 }
 
-func (s *Simulator) runSingleGame(game collection.ScheduledGame) {
+func (s *Simulator) runSingleGame(game *collection.ScheduledGame) {
 	attacker, defender := setAttackOrder(&game.Game.Away, &game.Game.Home)
 	remainingAttacks := 2
 
