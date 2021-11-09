@@ -1,7 +1,7 @@
 package collection
 
 type Player struct {
-	Name string `json:"username,omitempty" bson:"username,omitempty"`
+	Name string `json:"name,omitempty" bson:"name,omitempty"`
 	Team string `json:"team,omitempty" bson:"team,omitempty"`
 }
 
