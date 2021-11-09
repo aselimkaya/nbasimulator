@@ -3,6 +3,7 @@ package simulator
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/aselimkaya/nbasimulator/src/collection"
 	"github.com/go-resty/resty/v2"
@@ -25,6 +26,14 @@ type PlayerResp struct {
 }
 
 func (s *Simulator) InitFromAPI() {
+	found, err := s.PlayerService.Conn.CheckIfCollectionExists(os.Getenv("PLAYER_COLLECTION"))
+	if err != nil {
+		fmt.Println("collection names could not be retrieved from database, error:", err.Error())
+	}
+	if found { // do not insert teams and players again
+		return
+	}
+
 	client := resty.New()
 	page := 1
 	fetchMore := true
