@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aselimkaya/nbasimulator/src/collection"
@@ -47,4 +48,42 @@ func (s *PlayerGameInfoService) Delete(gameID, name string) error {
 	}
 
 	return nil
+}
+
+func (s *PlayerGameInfoService) GetAssistLeader() (collection.PlayerGameInfo, error) {
+	found, err := s.Conn.CheckIfCollectionExists(s.CollName)
+	if err != nil {
+		return collection.PlayerGameInfo{}, err
+	}
+
+	if found {
+		leader := collection.PlayerGameInfo{}
+		cursor, err := s.Conn.DB.Collection(s.CollName).Find(s.Conn.Ctx, bson.D{})
+
+		if err != nil {
+			return collection.PlayerGameInfo{}, fmt.Errorf("game info of players could not be retrieved, error: %s", err.Error())
+		}
+
+		for cursor.Next(context.TODO()) {
+			t := collection.PlayerGameInfo{}
+			err := cursor.Decode(&t)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			if t.PlayerStats.Assist > leader.PlayerStats.Assist {
+				leader = t
+			}
+		}
+
+		if err := cursor.Err(); err != nil {
+			fmt.Println(err)
+		}
+
+		cursor.Close(s.Conn.Ctx)
+
+		return leader, nil
+	}
+
+	return collection.PlayerGameInfo{}, fmt.Errorf("results not set yet")
 }
