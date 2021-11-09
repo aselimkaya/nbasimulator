@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <table>
+        <tr>
+            <th>Away</th>
+            <th>Away Score</th>
+            <th>Home Score</th>
+            <th>Home</th>
+            <th>Remaining</th>
+        </tr>
+        {{ range .games}}
+        <tr>
+            <td>{{ .Away }}</td>
+            <td>{{ .AwayScore }}</td>
+            <td>{{ .HomeScore }}</td>
+            <td>{{ .Home }}</td>
+            <td>{{ .Remaining }}</td>
+        </tr>
+        {{ end}}
+    </table>
+</body>
+
+</html>
